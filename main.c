@@ -1,39 +1,31 @@
 #include "stdio.h"
 #include "time.h"
 
-/*
-+-+-
-|x|
-+-+
-*/
+struct Game
+{
+    int lenght;
+    int height;
+    int cursor[2];
+    char *map[3][3];
+}; // TODO dynamic size
 
-void printMap_old(char *map_ptr, const int lenght, const int height) {
-    char (*map)[lenght] = map_ptr;
+void printGame(const struct Game* game) {
+    char (*map)[game->lenght] = game->map;
 
-    for (int i = 0; i < height; i++) {
-        for (int j = 0; j < lenght; j++) {
-            printf("+-\e[2D\e[B|%c\e[A", map[i][j]);
-        }
-        printf("+\e[D\e[B|\n");
-    }        
-    for (int j = 0; j < lenght; j++)
-            printf("+-");
-    printf("+\n\n");
-}
-
-void printGame(char *map_ptr, const int lenght, const int height) {
-    char (*map)[lenght] = map_ptr;
-
-    for (int i = 0; i < height; i++) {
-        for (int j = 0; j < lenght; j++) {
-            printf("\e[%i;%iH+-\e[2D\e[B|%c\e[A", i*2+1, j*2+1, map[i][j]);
+    printf("\e[2J");
+    for (int i = 0; i < game->height; i++) {
+        for (int j = 0; j < game->lenght; j++) {
+            if ((i == game->cursor[0]) && (j == game->cursor[1]))
+                printf("\e[%i;%iH+-\e[2D\e[B|%c\e[A", i*2+1, j*2+1, map[i][j]);
+            else
+                printf("\e[%i;%iH+-\e[2D\e[B|\e[30;47m%c\e[0m\e[A", i*2+1, j*2+1, map[i][j]);
         }
     } 
-    for (int i = 0; i < height; i++)
-        printf("\e[%i;%iH+\e[D\e[B|", i*2+1, lenght*2+1);
-    for (int i = 0; i < height; i++)
-        printf("\e[%i;%iH+-", height*2+1, i*2+1);
-    printf("\e[%i;%iH+", height*2+1, lenght*2+1);
+    for (int i = 0; i < game->height; i++)
+        printf("\e[%i;%iH+\e[D\e[B|", i*2+1, game->lenght*2+1);
+    for (int i = 0; i < game->height; i++)
+        printf("\e[%i;%iH+-", game->height*2+1, i*2+1);
+    printf("\e[%i;%iH+", game->height*2+1, game->lenght*2+1);
 
     printf("\n\n\n");
 }
@@ -42,29 +34,36 @@ float millis() {
     return (float)clock() / CLOCKS_PER_SEC;
 }
 
+
 int main(int argc, const char *argv[])
 {
-    //map defenition 
-    int lenght = 3;
-    int height = 3;
-    char map[height][lenght];
+    int lenght_i = 3;
+    int height_i = 3;
+
+    struct Game game = {
+        .lenght = lenght_i,
+        .height = height_i,
+        .cursor = {height_i/2, lenght_i/2,},
+    };
 
     //user input
     float lastPrint = 0.;
     float lastInput = 0.;
-    int cursor [2] = {height/2, height/2};
+    int cursor [2] = {game.lenght/2, game.height/2};
 
-    for (int i = 0; i < height; i++)
-        for (int j = 0; j < lenght; j++)
-            map[i][j] = ' ';    
-
-    printGame(map, lenght, height);
+    for (int i = 0; i < game.height; i++)
+        for (int j = 0; j < game.lenght; j++)
+            game.map[i][j] = ' ';    
+    
 
     //infinite game loop
     while (1)
     {
-        if (millis() > lastPrint+1000./60.) //60 fps
-            printGame(map, lenght, height);
+        //60 fps
+        if (millis() > lastPrint+1./60.) {
+            printGame(&game);
+            lastPrint = millis();
+        }
         
     }
     
